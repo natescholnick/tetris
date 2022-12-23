@@ -11,7 +11,8 @@ blocks = {1: [[(0, 0), (0, 1), (0, 2), (0, 3)], [(0, 2), (1, 2), (2, 2), (3, 2)]
 
 
 class GameState():
-    def __init__(self):
+    def __init__(self, window):
+        self.window = window
         self.board = [[0 for _ in range(10)] for _ in range(22)]
         self.block_type = 0
         self.block_coordinates = [0, 0]
@@ -33,9 +34,10 @@ class GameState():
         return board
 
     def print_board(self):
+        self.window.clear()
         temp_board = deepcopy(self.board)
         temp_board = self.write_block_to_board(temp_board)
-        print('+' + '-' * 21 + '+')
+        self.window.addstr(0, 0, '+---------------------+')
         for i in range(19, -1, -1):
             row_print = '| '
             for char in temp_board[i]:
@@ -53,8 +55,9 @@ class GameState():
                 row_print += ' ' * 5 + 'Tetrises:'
             if i == 8:
                 row_print += f"{' ' * 5}{self.stats['tetrises']}"
-            print(row_print)
-        print('+' + '-' * 21 + '+')
+            self.window.addstr(i+1, 0, row_print)
+        self.window.addstr(21, 0, '+---------------------+')
+        self.window.refresh()
 
     def clear_rows(self, rows):
         to_be_cleared = []
@@ -84,9 +87,9 @@ class GameState():
     def push_block(self, input):
         direction_bit = 0
         i, j = self.block_coordinates
-        if input == 'D':
+        if input in [68, 100]:
             direction_bit += 1
-        elif input == 'A':
+        elif input in [65, 97]:
             direction_bit -= 1
         for diff_i, diff_j in blocks[self.block_type][self.block_rotation]:
             destination_column = j + diff_j + direction_bit
@@ -98,24 +101,13 @@ class GameState():
         self.block_rotation = (self.block_rotation + 1) % 4
         # TODO: figure out logic for rotation based collosions
 
+    # Controls are WASD
     def get_next_state(self, input):
-        if input == 'S':
+        if input in [83, 115]:
             self.drop_block()
-        elif input in ['A', 'D']:
+        elif input in [97, 65, 100, 68]:
             self.push_block(input)
-        elif input == 'W':
+        elif input in [87, 119]:
             self.rotate_block()
         self.print_board()
         return self.board
-
-
-NewGame = GameState()
-print("Type moves (A/S/D) or [T]erminate.")
-playing = True
-while playing:
-    move = input()
-    if move == 'T':
-        playing = False
-        break
-    NewGame.get_next_state(move)
-print('Goodbye!')
