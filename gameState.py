@@ -23,6 +23,7 @@ class GameState():
     def spawn_new_block(self):
         self.block_type = random.randint(1, 7)
         self.block_coordinates = [19, 4]
+        self.stats['blocks_dropped'] += 1
 
     def write_block_to_board(self, board):
         block_coords = blocks[self.block_type][self.block_rotation]
@@ -40,15 +41,41 @@ class GameState():
             for char in temp_board[i]:
                 row_print += f'{char} '
             row_print += '|'
+            if i == 15:
+                row_print += ' ' * 5 + 'Blocks dropped:'
+            if i == 14:
+                row_print += f"{' ' * 5}{self.stats['blocks_dropped']}"
+            if i == 12:
+                row_print += ' ' * 5 + 'Lines cleared:'
+            if i == 11:
+                row_print += f"{' ' * 5}{self.stats['lines_cleared']}"
+            if i == 9:
+                row_print += ' ' * 5 + 'Tetrises:'
+            if i == 8:
+                row_print += f"{' ' * 5}{self.stats['tetrises']}"
             print(row_print)
         print('+' + '-' * 21 + '+')
 
+    def clear_rows(self, rows):
+        to_be_cleared = []
+        for row in rows:
+            if all([val != 0 for val in self.board[row]]):
+                to_be_cleared.append(row)
+        for row in sorted(to_be_cleared, reverse=True):
+            self.board.append([0] * 10)
+            del self.board[row]
+            self.stats['lines_cleared'] += 1
+        if len(to_be_cleared) == 4:
+            self.stats['tetrises'] += 1
+
     def drop_block(self):
         i, j = self.block_coordinates
+        rows = {i + x for x, _ in blocks[self.block_type][self.block_rotation]}
         for diff_i, diff_j in blocks[self.block_type][self.block_rotation]:
             if self.board[i + diff_i - 1][j + diff_j] != 0 or i + diff_i == 0:
                 # comes to rest
                 self.write_block_to_board(self.board)
+                self.clear_rows(rows)
                 self.spawn_new_block()
                 break
         # falls 1 unit
